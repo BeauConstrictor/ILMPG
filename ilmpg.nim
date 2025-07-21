@@ -1,5 +1,6 @@
 import std/osproc, std/streams, std/terminal, std/strutils, std/os,
-       std/sets, std/random, std/tables, std/cmdline, std/sequtils
+       std/sets, std/random, std/tables, std/cmdline, std/exitprocs,
+       std/json, std/times
 import regex
 
 randomize()
@@ -13,14 +14,36 @@ const
   ansiEscape = re2"\x1b\[[0-9;]*m"
   linkPattern = re2"\[([^\]]+)\]\(([^)]+)\)"
 
-  yPadding = 10
-  maxWidth = 90
+  configPath = getHomeDir() & ".ilm/ilmpg/config.json"
+
+let
+  jsonNode = parseJson(readFile(configPath))
+
+proc getSettingStr(name: string, default: string): string =
+  try:
+    return jsonNode[name].getStr()
+  except:
+    return default
+
+proc getSettingInt(name: string, default: int): int =
+  try:
+    return jsonNode[name].getInt()
+  except:
+    return default
+
+let
+  themeName = getSettingStr("theme", "plain")
+  yPadding = getSettingInt("y-padding", 10)
+  maxWidth = getSettingInt("max-width", 66)
 
 var globalIlmExtension: string
 if paramCount() > 0:
   globalIlmExtension = paramStr(1)
 
 proc xPadding(cols: int): int =
+  if maxWidth == -1:
+    return 1
+
   if cols < maxWidth div 2:
     return 0
   if cols < maxWidth + 2:
@@ -28,12 +51,15 @@ proc xPadding(cols: int): int =
   else:
     return (cols - maxWidth) div 2
 
-proc md2ansi(md: string): string =
+proc restoreTerminal() =
+  echo "\e[0m\e[?25h\e[2J\e[H\e[?1049l"
+  stdout.flushFile()
+
+proc theme(md: string): string =
   let (cols, _) = terminalSize()
 
-  const p = "/usr/local/bin/md2ansi"
-  let prc = startProcess(p, ".", 
-    ["--no-links", "--width", $(cols - xPadding(cols)*2)])
+  let p = getHomeDir() & ".ilm/ilmpg/themes/" & themeName
+  let prc = startProcess(p, ".", [$(cols - xPadding(cols)*2)])
   prc.inputStream.writeLine(md)
   prc.inputStream.flush()
   prc.inputStream.close()
@@ -49,9 +75,9 @@ proc getUniqueId(): int =
     if idstried > 1000:
       echo "\e[2J\e[H" # clear
       echo "Link cache cleared.\n"
-      echo md2ansi("The session has encountered more than 1000 hyperlinks, if" &
-      " you go back too many pages, then some links will now lead to different" &
-      " places. To fix this, just restart ilmpg.")
+      echo theme("The session has encountered more than 1000 hyperlinks, if" &
+      " you go back too many pages, then some links will now lead to"          &
+      " different places. To fix this, just restart ilmpg.")
       stdout.write "Press any key. [ ]\b\b"
       discard getch()
       linkMap = initTable[int, string]()
@@ -83,6 +109,11 @@ proc numberLinks(line: string): string =
       "\e[34m\e[4m(" & ($linkId).align(3, '0') & ") " & txt & "\e[0m\e[38;5;7m")
   else:
     result = line
+
+  if result == line:
+    return result
+  else:
+    return numberLinks(result)
 
 
 proc fetch(rawLinkLocation: string, ilmExtension=globalIlmExtension): string =
@@ -118,19 +149,22 @@ proc showPage(lines: seq[string], title: string, offset: int, rows: int) =
   stdout.write "q for quit, h for help -> "
 
 proc getPage(md: string): string =
-  let ansiWithoutLinks = md2ansi(md)
+  # TODO: make this less inefficient
+
+  var ansi = numberLinks(theme(md))
   var ansiLines: seq[string]
 
   for i in 1..yPadding:
     ansiLines.add("")
 
-  for line in ansiWithoutLinks.split("\n"):
-    ansiLines.add(numberLinks(line))
-  let ansi = ansiLines.join("\n")
+  for line in ansi.split("\n"):
+    ansiLines.add(line)
 
-  return ansi
+  return ansiLines.join("\n")
 
 proc startPager(ansi: string, location: string, ilmext: string) =
+  stdout.write "\e[?1049h"
+  
   let title = ilmext.toUpper() & ": " & location
   let (_, rows) = terminalSize()
 
@@ -203,9 +237,11 @@ proc startPager(ansi: string, location: string, ilmext: string) =
           discard getch()
         else:
           echo "Loading..."
-          let linkData = linkMap[id].split(": ")
+          let linkData = linkMap[id].replace("\n", " ").split(": ")
           if  linkData.len < 2:
-            startPager("The link is invalid.", "LINK EXT ABSENT", "ERROR")
+            let md = fetch("The link you selected is missing an extension. This is likely due to the page being designed for a traditional markdown viewer.", "error")
+            let ansi = getPage(md)
+            startPager(ansi, "Invalid Link", "error")
           else:
             let ilmExtension = linkData[0]
             let newLinkLocation = linkData[1..^1].join(":")
@@ -220,6 +256,8 @@ const version = """ilmpg (Interlinked-Markdown Page Gazer) 1.0.0
 This project is licensed under the terms of the MIT license."""
 
 when isMainModule:
+  addExitProc restoreTerminal
+
   if paramCount() == 0:
     echo usage
   elif paramStr(1) == "--version" or paramStr(1) == "-v":
