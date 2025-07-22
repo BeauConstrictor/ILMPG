@@ -175,6 +175,7 @@ proc getPage(md: string): string =
 
 proc startPager(ansi: string, location: string, ilmext: string) =
   stdout.write "\e[?1049h"
+  addExitProc restoreTerminal
   
   let title = ilmext.toUpper() & ": " & location
   let (_, rows) = terminalSize()
@@ -267,8 +268,6 @@ const version = """ilmpg (Interlinked-Markdown Page Gazer) 1.0.0
 This project is licensed under the terms of the MIT license."""
 
 when isMainModule:
-  addExitProc restoreTerminal
-
   if paramCount() == 0:
     echo usage
   elif paramStr(1) == "--version" or paramStr(1) == "-v":
