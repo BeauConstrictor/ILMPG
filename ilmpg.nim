@@ -116,13 +116,24 @@ proc numberLinks(line: string): string =
     return numberLinks(result)
 
 
-proc fetch(rawLinkLocation: string, ilmExtension=globalIlmExtension): string =
+proc encodeText(text: string, ilmExtension: string): string =
+  let bin = extensionDir & ilmExtension & "-encoder"
+  if not fileExists(bin):
+    return text
+  let prc = startProcess(bin)
+  prc.inputStream.write(text)
+  prc.inputStream.flush()
+  prc.inputStream.close()
+  return prc.outputStream.readAll()
 
+
+proc fetch(rawLinkLocation: string, ilmExtension=globalIlmExtension): string =
   var linkLocation = rawLinkLocation
   if "???" in rawLinkLocation:
-    stdout.write "> "
+    stdout.write rawLinkLocation & " -> "
     let input = stdin.readLine()
-    linkLocation = rawLinkLocation.replace("???", input)
+    let encoded = encodeText(input, ilmExtension)
+    linkLocation = rawLinkLocation.replace("???", encoded)
 
   let bin = extensionDir & ilmExtension
   if not fileExists(bin):
