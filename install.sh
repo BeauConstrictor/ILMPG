@@ -1,3 +1,4 @@
+#!/bin/bash
 
 ILMDIR="$HOME/.ilm"
 DIR=$ILMDIR/ilmpg
