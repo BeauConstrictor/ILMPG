@@ -27,7 +27,14 @@ Clone the ILMPG repo and build it using Nim:
 nim c -d:release src/ilmpg.nim
 ```
 
-Then install extensions in `~/.ilm/extensions/`, or use an extension manager like [ILMEM](https://github.com/BeauConstrictor/ILMEM/).
+Run the `install.sh`:
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+Then install extensions in `~/.ilm/extensions/` (as with all ILM software), or use an extension manager like [ILMEM](https://github.com/BeauConstrictor/ILMEM/).
 
 ### Requirements
 
