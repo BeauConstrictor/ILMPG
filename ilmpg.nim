@@ -311,7 +311,7 @@ proc startPager(ansi: string, location: string, ilmext: string) =
             let ansi = getPage(content)
             startPager(ansi, newLinkLocation, ilmExtension)
 
-const usage = """Usage: ilmpg EXTENSION [OPTION]... DOMAIN [PATH]... [--KEY [VALUE]]...
+const usage = """Usage: ilmpg [OPTION]... EXTENSION LOCATION
 Try 'ilmpg --manual welcome' for more information"""
 
 const version = """ilmpg (Interlinked-Markdxown Page Gazer) 1.0.0
