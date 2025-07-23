@@ -1,0 +1,10 @@
+#!/bin/bash
+
+read -r PAGE
+FILE="$HOME/.ilm/ilmpg/manual/${PAGE}.md"
+
+if [ -e "$FILE" ]; then
+    cat "$FILE"
+else
+    echo "The page '$PAGE' does not exist in the manual."
+fi
