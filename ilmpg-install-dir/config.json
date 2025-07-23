@@ -1,5 +1,5 @@
 {
     "theme": "gradient",
-    "yPadding": 10,
-    "maxWidth": 66
+    "y-padding": 10,
+    "max-width": 66
 }
