@@ -1,4 +1,4 @@
-# =============================================================================
+# ==============================================================================
 # ilmpg (Interlinked-Markdown Page Gazer)
 #
 # Author: BeauConstrictor
@@ -33,6 +33,7 @@
 # TODO: implement pmPeekLink
 #
 # Bugs:
+# TODO: you can't go to links with 4 digit IDs (or more)
 # TODO: headings in gradient theme do not wrap
 # TODO: get rid of all the looping in getPage
 # TODO: some escape sequences for input cause weird behaviour - look into this
@@ -41,11 +42,10 @@
 # TODO: fallback if the terminal does not support ANSI escape
 # TODO: alternate extension system on Windows
 #
-# =============================================================================
+# ==============================================================================
 
-import std/osproc, std/streams, std/terminal, std/strutils, std/os,
-       std/sets, std/random, std/tables, std/cmdline, std/exitprocs,
-       std/json, std/times
+import std/osproc, std/streams, std/terminal, std/strutils, std/os, std/random,
+       std/tables, std/cmdline, std/exitprocs, std/json
 import regex
 
 randomize()
@@ -132,7 +132,6 @@ var linkMap: Table[int, string]
 var linkCounter = 0
 
 proc getUniqueId(): int =
-  var id: int
   linkCounter += 1
   return linkCounter
 
@@ -180,6 +179,8 @@ proc fetch(rawLinkLocation: string, ilmExtension=globalIlmExtension): string =
     let input = stdin.readLine()
     let encoded = encodeText(input, ilmExtension)
     linkLocation = rawLinkLocation.replace("???", encoded)
+
+  echo "Loading..."
 
   let bin = extensionDir & ilmExtension
   if not fileExists(bin):
@@ -243,7 +244,7 @@ proc startPager(ansi: string, location: string, ilmext: string) =
         of 'j':
           offset += 1
         of 'r':
-          echo "reload\nLoading..."
+          echo "reload\n"
           let md = fetch(location, ilmext)
           let ansi = getPage(md)
           startPager(ansi, location, ilmext)
@@ -278,6 +279,12 @@ proc startPager(ansi: string, location: string, ilmext: string) =
 
       if choice == "":
         discard
+      elif choice.len > 3 and ": " in choice:
+        let ext = choice.split(": ")[0]
+        let loc = choice[ext.len+2..^1]
+        let md = fetch(loc, ext)
+        let ansi = getPage(md)
+        startPager(ansi, loc, ext)
       elif choice.len > 3:
         let md = fetch(choice)
         let ansi = getPage(md)
@@ -292,7 +299,6 @@ proc startPager(ansi: string, location: string, ilmext: string) =
           echo "Link not found on page!"
           discard getch()
         else:
-          echo "Loading..."
           let linkData = linkMap[id].replace("\n", " ").split(": ", 1)
           if  linkData.len < 2:
             let md = fetch("The link you selected is missing an extension. This is likely due to the page being designed for a traditional markdown viewer.", "error")
