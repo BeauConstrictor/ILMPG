@@ -1,9 +1,70 @@
+# =============================================================================
+# ilmpg (Interlinked-Markdown Page Gazer)
+#
+# Author: BeauConstrictor
+# License: MIT
+#
+# Description:
+# This program is a terminal-based pager for viewing interlinked Markdown
+# documents with rich ANSI styling and interactive hyperlink navigation.
+#
+# Features:
+# - Renders Markdown using customizable external theming binaries.
+# - Detects and replaces Markdown-style links with numbered references.
+# - Allows link navigation by ID, with optional text encoding.
+# - Supports extensions for dynamic link resolution.
+# - Configurable appearance via JSON settings.
+#
+# Usage:
+#   ilmpg EXTENSION [OPTION]... DOMAIN [PATH]... [--KEY [VALUE]]...
+#   Try 'ilmpg --manual welcome' for detailed usage.
+#
+# Dependencies:
+#   - External binaries located in ~/.ilm/extensions/ & ~/.ilm/ilmpg/themes/
+#   - Config file located at ~/.ilm/ilmpg/config.json
+#   - Terminal with ANSI support
+#
+# Notes:
+# - Link caching is used to avoid ID conflicts and support back navigation.
+# - Uses an alternate screen buffer during pager mode.
+# - Designed for use in Markdown-based hypertext systems.
+#
+# Todos:
+# TODO: implement pmPeekLink
+#
+# Bugs:
+# TODO: headings in gradient theme do not wrap
+# TODO: get rid of all the looping in getPage
+# TODO: some escape sequences for input cause weird behaviour - look into this
+#
+# Minor Issues:
+# TODO: fallback if the terminal does not support ANSI escape
+# TODO: alternate extension system on Windows
+#
+# =============================================================================
+
 import std/osproc, std/streams, std/terminal, std/strutils, std/os,
        std/sets, std/random, std/tables, std/cmdline, std/exitprocs,
        std/json, std/times
 import regex
 
 randomize()
+
+
+proc supportsAnsi(): bool =
+  result = isatty(stdout)
+  result = result and getEnv("TERM") != ""
+  result = result and not getEnv("TERM").startsWith("dumb")
+
+if not supportsAnsi():
+  when defined(windows):
+    echo "Your terminal doesn't support ANSI, a requirement for this program" &
+         "to operate. I recommend Windows Terminal, which is available from" &
+         "the Microsoft Store."
+  when not defined(windows):
+    echo "Your terminal doesn't support ANSI, a requirement for this program" &
+         "to operate. I recommend Kitty."
+
 
 type
   pagerMode = enum
@@ -66,54 +127,37 @@ proc theme(md: string): string =
   return prc.outputStream.readAll()
 
 var linkMap: Table[int, string]
-var usedIds = initHashSet[int]()
+var linkCounter = 0
 
 proc getUniqueId(): int =
   var id: int
-  var idstried = 0
-  while true:
-    if idstried > 1000:
-      echo "\e[2J\e[H" # clear
-      echo "Link cache cleared.\n"
-      echo theme("The session has encountered more than 1000 hyperlinks, if" &
-      " you go back too many pages, then some links will now lead to"          &
-      " different places. To fix this, just restart ilmpg.")
-      stdout.write "Press any key. [ ]\b\b"
-      discard getch()
-      linkMap = initTable[int, string]()
-      usedIds = initHashSet[int]()
-
-    id = rand(1..999)
-    if id notin usedIds:
-      usedIds.incl(id)
-      break
-    else:
-      idstried += 1
-  return id
+  linkCounter += 1
+  return linkCounter
 
 
 proc numberLinks(line: string): string =
-  let cleanLine = line.replace(ansiEscape, "")
+  var outLine = line
+  var depth = 0
+  while true:
+    if depth == 999:
+      break
 
-  var m = RegexMatch2()
+    let cleanLine = outLine.replace(ansiEscape, "")
+    var m = RegexMatch2()
+    if cleanLine.find(linkPattern, m):
+      let txt = cleanLine[m.group(0)]
+      let loc = cleanLine[m.group(1)]
+      let linkId = getUniqueId()
+      linkMap[linkId] = loc
 
-  if cleanLine.find(linkPattern, m):
-    let txt = cleanLine[m.group(0)]
-    let linkLocation = cleanLine[m.group(1)]
-    let linkId = getUniqueId()
+      outLine = outLine.replace(
+        "[" & txt & "](" & loc & ")",
+        "\e[34m(" & ($linkId).align(3, '0') & ") " & txt & "\e[0m\e[38;5;7m")
+      inc depth
+    else:
+      break
 
-    linkMap[linkId] = linkLocation
-
-    result = line.replace(
-      "[" & txt & "](" & linkLocation & ")",
-      "\e[34m\e[4m(" & ($linkId).align(3, '0') & ") " & txt & "\e[0m\e[38;5;7m")
-  else:
-    result = line
-
-  if result == line:
-    return result
-  else:
-    return numberLinks(result)
+  return outLine
 
 
 proc encodeText(text: string, ilmExtension: string): string =
@@ -160,9 +204,7 @@ proc showPage(lines: seq[string], title: string, offset: int, rows: int) =
   stdout.write "q for quit, h for help -> "
 
 proc getPage(md: string): string =
-  # TODO: make this less inefficient
-
-  var ansi = numberLinks(theme(md))
+  let ansi = numberLinks(theme(md))
   var ansiLines: seq[string]
 
   for i in 1..yPadding:
@@ -249,7 +291,7 @@ proc startPager(ansi: string, location: string, ilmext: string) =
           discard getch()
         else:
           echo "Loading..."
-          let linkData = linkMap[id].replace("\n", " ").split(": ")
+          let linkData = linkMap[id].replace("\n", " ").split(": ", 1)
           if  linkData.len < 2:
             let md = fetch("The link you selected is missing an extension. This is likely due to the page being designed for a traditional markdown viewer.", "error")
             let ansi = getPage(md)
@@ -264,7 +306,7 @@ proc startPager(ansi: string, location: string, ilmext: string) =
 const usage = """Usage: ilmpg EXTENSION [OPTION]... DOMAIN [PATH]... [--KEY [VALUE]]...
 Try 'ilmpg --manual welcome' for more information"""
 
-const version = """ilmpg (Interlinked-Markdown Page Gazer) 1.0.0
+const version = """ilmpg (Interlinked-Markdxown Page Gazer) 1.0.0
 This project is licensed under the terms of the MIT license."""
 
 when isMainModule:
@@ -276,7 +318,7 @@ when isMainModule:
     let md = fetch("cheatsheet", "ilmpg")
     let ansi = getPage(md)
     startPager(ansi, "cheatsheet", "ilmpg")
-  elif paramStr(1) == "--manual"  or paramStr(1) == "-m" and paramCount() > 1:
+  elif (paramStr(1) == "--manual" or paramStr(1) == "-m") and paramCount() > 1:    
     globalIlmExtension = "ilmpg"
     let location = commandLineParams()[1..^1].join(" ")
     let md = fetch(location, globalIlmExtension)
