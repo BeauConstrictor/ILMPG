@@ -30,7 +30,7 @@
 # - Designed for use in Markdown-based hypertext systems.
 #
 # Todos:
-# TODO: implement pmPeekLink
+# Nothing here! (just fix more bugs i guess)
 #
 # Bugs:
 # TODO: you can't go to links with 4 digit IDs (or more)
@@ -254,6 +254,8 @@ proc startPager(ansi: string, location: string, ilmext: string) =
           startPager(ansi, "cheatsheet", "ilmpg")
         of 'g':
           mode = pmGotoLink
+        of 'p':
+          mode = pmPeekLink
         of '\x1B':
           discard getch() # [
           case getch().int:
@@ -270,6 +272,29 @@ proc startPager(ansi: string, location: string, ilmext: string) =
         offset = 0
       elif offset > lines.len - 3:
         offset = lines.len - 3
+
+    elif mode == pmPeekLink:
+      mode = pmNormal
+      stdout.write "peek "
+      let choice = stdin.readLine()
+
+      if choice == "":
+        discard
+      else:
+        var id: int
+        try:
+          id = choice.parseInt()
+        except:
+          discard
+        if id notin linkMap:
+          echo "Link not found on page!"
+        else:
+          let linkData = linkMap[id].replace("\n", " ").split(": ", 1)
+          if  linkData.len < 2:
+            echo "ERROR: the link is invalid"
+          else:
+            echo linkData.join(": ")
+        discard getch()
 
     elif mode == pmGotoLink:
       mode = pmNormal
