@@ -59,11 +59,11 @@ proc supportsAnsi(): bool =
 if not supportsAnsi():
   when defined(windows):
     echo "Your terminal doesn't support ANSI, a requirement for this program" &
-         "to operate. I recommend Windows Terminal, which is available from" &
-         "the Microsoft Store."
+         " to operate. I recommend Windows Terminal, which is available from" &
+         " the Microsoft Store."
   when not defined(windows):
-    echo "Your terminal doesn't support ANSI, a requirement for this program" &
-         "to operate. I recommend Kitty."
+    echo " Your terminal doesn't support ANSI, a requirement for this program" &
+         " to operate. I recommend Kitty."
 
 
 type
