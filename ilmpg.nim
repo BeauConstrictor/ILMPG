@@ -132,13 +132,13 @@ proc theme(md: string): string =
   prc.inputStream.close()
   return prc.outputStream.readAll()
 
-var linkMap: Table[int, string]
-var linkCounter = 0
+var
+  linkMap: Table[int, string]
+  linkCounter = 0
 
 proc getUniqueId(): int =
   linkCounter += 1
   return linkCounter
-
 
 proc numberLinks(line: string): string =
   var outLine = line
@@ -175,7 +175,6 @@ proc encodeText(text: string, ilmExtension: string): string =
   prc.inputStream.close()
   return prc.outputStream.readAll()
 
-
 proc fetch(rawLinkLocation: string, ilmExtension=globalIlmExtension): string =
   var linkLocation = rawLinkLocation
   if "???" in rawLinkLocation:
@@ -195,9 +194,9 @@ proc fetch(rawLinkLocation: string, ilmExtension=globalIlmExtension): string =
   prc.inputStream.close()
   return prc.outputStream.readAll()
 
-proc showPage(lines: seq[string], title: string, offset: int, rows: int) =
+proc showPage(lines: seq[string], title: string, offset: int) =
   let offsetLines = lines[offset .. ^1]
-  let (cols, _) = terminalSize()
+  let (cols, rows) = terminalSize()
 
   echo "\e[2J\e[H\e[0m\e[38;5;7m" # clear & grey text
   var linesEchoed = 0
@@ -234,7 +233,7 @@ proc startPager(ansi: string, location: string, ilmext: string) =
   var mode = pmNormal
 
   while true:
-    showPage(lines, title, offset, rows)
+    showPage(lines, title, offset)
     if mode == pmNormal:
       case getch()
         of 'b':
