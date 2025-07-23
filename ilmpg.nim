@@ -35,11 +35,10 @@
 # Bugs:
 # TODO: you can't go to links with 4 digit IDs (or more)
 # TODO: headings in gradient theme do not wrap
-# TODO: get rid of all the looping in getPage
+# TODO: get rid of all the iteration in getPage
 # TODO: some escape sequences for input cause weird behaviour - look into this
 #
-# Minor Issues:
-# TODO: fallback if the terminal does not support ANSI escape
+# WIP Windows Support:
 # TODO: alternate extension system on Windows
 #
 # ==============================================================================
@@ -311,7 +310,7 @@ proc startPager(ansi: string, location: string, ilmext: string) =
             let ansi = getPage(content)
             startPager(ansi, newLinkLocation, ilmExtension)
 
-const usage = """Usage: ilmpg [OPTION]... EXTENSION LOCATION
+const usage = """Usage: ilmpg [OPTION] EXTENSION LOCATION
 Try 'ilmpg --manual welcome' for more information"""
 
 const version = """ilmpg (Interlinked-Markdxown Page Gazer) 1.0.0
