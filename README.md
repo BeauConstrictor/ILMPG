@@ -13,7 +13,7 @@
 - Scrollable pager UI with keyboard navigation.
 - Best-in-class documentation on everything ILM makes `ilmpg` a great place to learn about ILM as a whole.
 
-ILMPG is an entirely keyboard-based program, so you use your keys to scroll and navigate. To see specific keybinds, see the [cheatsheet](ilmpg-install-dir/manual/cheatsheet.md)
+ILMPG is an entirely keyboard-based program, so you use your keys to scroll and navigate.
 
 ## Extensions
 
@@ -24,7 +24,7 @@ ILMPG uses the standard extension system introduced by ILM. This means that any 
 Clone the ILMPG repo and build it using Nim:
 
 ```bash
-nim c -d:release src/ilmpg.nim
+nim c -d:release ilmpg.nim
 ```
 
 Run the `install.sh`:
