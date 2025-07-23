@@ -33,7 +33,6 @@
 # Nothing here! (just fix more bugs i guess)
 #
 # Bugs:
-# TODO: you can't go to links with 4 digit IDs (or more)
 # TODO: headings in gradient theme do not wrap
 # TODO: get rid of all the iteration in getPage
 # TODO: some escape sequences for input cause weird behaviour - look into this
@@ -303,16 +302,6 @@ proc startPager(ansi: string, location: string, ilmext: string) =
 
       if choice == "":
         discard
-      elif choice.len > 3 and ": " in choice:
-        let ext = choice.split(": ")[0]
-        let loc = choice[ext.len+2..^1]
-        let md = fetch(loc, ext)
-        let ansi = getPage(md)
-        startPager(ansi, loc, ext)
-      elif choice.len > 3:
-        let md = fetch(choice)
-        let ansi = getPage(md)
-        startPager(ansi, choice, globalIlmExtension)
       else:
         var id: int
         try:
@@ -320,12 +309,20 @@ proc startPager(ansi: string, location: string, ilmext: string) =
         except:
           discard
         if id notin linkMap:
-          echo "Link not found on page!"
-          discard getch()
+          if ": " in choice:
+            let ext = choice.split(": ")[0]
+            let loc = choice[ext.len+2..^1]
+            let md = fetch(loc, ext)
+            let ansi = getPage(md)
+            startPager(ansi, loc, ext)
+          else:
+            let md = fetch(choice)
+            let ansi = getPage(md)
+            startPager(ansi, choice, globalIlmExtension)
         else:
           let linkData = linkMap[id].replace("\n", " ").split(": ", 1)
           if  linkData.len < 2:
-            let md = fetch("The link you selected is missing an extension. This is likely due to the page being designed for a traditional markdown viewer.", "error")
+            let md = fetch("The link you selected is invalid. The page is most likely written in Markdown, and not ILM.", "error")
             let ansi = getPage(md)
             startPager(ansi, "Invalid Link", "error")
           else:
