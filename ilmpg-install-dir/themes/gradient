@@ -1,0 +1,3 @@
+#!/bin/bash
+
+md2ansi --width $1 --no-links

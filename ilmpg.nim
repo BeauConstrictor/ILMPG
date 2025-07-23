@@ -77,8 +77,14 @@ const
 
   configPath = getHomeDir() & ".ilm/ilmpg/config.json"
 
-let
-  jsonNode = parseJson(readFile(configPath))
+var configFile = "{}"
+try:
+  configFile = readFile(configPath)
+except CatchableError as err:
+  echo "ilmpg: " & err.msg
+  quit 1
+
+let jsonNode = parseJson(configFile)
 
 proc getSettingStr(name: string, default: string): string =
   try:
