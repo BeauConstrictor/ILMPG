@@ -65,6 +65,8 @@ if not supportsAnsi():
     echo " Your terminal doesn't support ANSI, a requirement for this program" &
          " to operate. I recommend Kitty."
 
+  quit 1
+
 
 type
   pagerMode = enum
