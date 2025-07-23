@@ -2,22 +2,6 @@
 
 **ILMPG** is a terminal-based viewer for **InterLinkedMarkdown (ILM)** documents. It renders ILM content as paged, ANSI-formatted output suitable for terminal display, and allows users to navigate between pages with a wide variety of link extensions, compatible with the latest ILM extension standard.
 
-If you are unsure about the ILM standard itself, read about it here: [ILM](ilmpg: about-ilm)
-
----
-
-## Manual
-
-This manual features extensive documentation, so to find what you're looking for, you may want to use the [index](ilmpg: index).
-To get to any manual page directly, enter
-
-```bash
-ilmpg --manual <page-name>
-```
-
-You can see the page name at the bottom of your screen.
-If you are coming from another ILM viewer and you are more comfortable reading with that program initially, then you can access this manual from any viewer using the `ilmpg` extension.
-
 ## Features
 
 - View ILM documents, beautifully rendered in-terminal.
@@ -25,13 +9,15 @@ If you are coming from another ILM viewer and you are more comfortable reading w
 - Support for modern prompt links
 - Supports standard ILM extensions from `ilmem` and similar
 - Scrollable pager UI with keyboard navigation.
-- Best-in-class documentation on everything ILM makes `ilmpg` a great place to learn.
+- Best-in-class documentation on everything ILM makes `ilmpg` a great place to learn about ILM as a whole.
 
 ILMPG assigns each link a *unique number* (e.g. 123) and displays it as blue text in the terminal.
 
+---
+
 ## Navigation
 
-You can scroll and navigate with the keyboard, to see specific keybinds, see the [cheatsheet](ilmpg: cheatsheet)
+You can scroll and navigate with the keyboard, to see specific keybinds, see the [cheatsheet](ilmpg-install-dir/manual/cheatsheet.md)
 
 ### Extensions
 
@@ -55,13 +41,13 @@ Extensions can be written in any language, but bash is most commonly used.
 #### Requirements
 
 - A terminal that supports ANSI escape sequences.
-- To use the *gradient* theme, you need [md2ansi](http: https://raw.githubusercontent.com/Open-Technology-Foundation/md2ansi/refs/heads/main/README.md) installed.
+- To use the *gradient* theme, you need [md2ansi](https://github.com/Open-Technology-Foundation/md2ansi/) installed.
 
 ##### Installing md2ansi
 
-The script `md2ansi` is the only real dependency of ILMPG. See it's [github page](http: https://raw.githubusercontent.com/Open-Technology-Foundation/md2ansi/refs/heads/main/README.md) for installation instructions
+The script `md2ansi` is the only real dependency of ILMPG. See it's [github page](https://github.com/Open-Technology-Foundation/) for installation instructions
 
-It is a python script that, as the name implies, converts markdown files to nicely rendered ANSI text for the terminal. It is used in the default [theme](ilmpg: themes). If you *do not* wish to install `md2ansi`, you can use the *plain* theme, which has no dependencies. See [themes](ilmpg: themes) for more how to change themes.
+It is a python script that, as the name implies, converts markdown files to nicely rendered ANSI text for the terminal. It is used in the default [theme](ilmpg-install-dir/manual/themes.md). If you *do not* wish to install `md2ansi`, you can use the *plain* theme, which has no dependencies. See [themes](ilmpg-install-dir/manual/themes.md) for more how to change themes.
 
 ---
 
@@ -73,7 +59,7 @@ Clone the ILMPG repo and build it using Nim:
 nim c -d:release src/ilmpg.nim
 ```
 
-Then install extensions in `~/.ilm/extensions/`, or use an extension manager like [ILMEM](http: https://raw.githubusercontent.com/BeauConstrictor/ILMEM/refs/heads/main/README.md).
+Then install extensions in `~/.ilm/extensions/`, or use an extension manager like [ILMEM](https://github.com/BeauConstrictor/ILMEM/).
 
 ## Design Philosophy
 
